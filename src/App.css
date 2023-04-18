@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+:root {
+  --textColor: #34495e;
+  --bgColor: #f0f0f0;
+  --buttonBg: #0074d9;
+}
+
+body {
+  margin: 0;
+}
+
+.App {
+  background-color: var(--bgColor);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--textColor);
+}
+
+.button {
+  background-color: var(--buttonBg);
+  color: #fff;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  border: 0;
+  border-radius: 40px;
+  padding: 15px 25px;
+  margin-top: 20px;
+  width: fit-content;
+}
+
+.button a{
+  text-decoration: none;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.button:hover {
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.logo-text {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  color: var(--textColor);
+  font-size: 40px;
+  margin-top: 25px;
+}
+
+.sub-text {
+  font-family: 'Open Sans', sans-serif;
+  color: var(--textColor);
+  font-size: 24px;
+  margin-top: 10px;
+}
+
+.smetanet-page {
+  background-color: var(--bgColor);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--textColor);
+  padding: 3%;
+}
+
+#smetanetMap {
+  min-height: 100vh;
+  min-width: 100%;
+  overflow: scroll;
+}
+
+
+
+
