@@ -2,8 +2,11 @@ import { useState, useEffect } from "react"
 import * as d3 from "d3";
 import ReactionMetaboliteFormatter from "./ReactionMetaboliteFormatter"
 
-const linkArc  = (d) => {
-  const r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y) 
+const linkArc = (d) => {
+  let r = 0
+  /* if (d.source.coFactor || d.target.coFactor) { */
+    r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y) 
+  /* }  */
   return `
     M${d.source.x},${d.source.y}
     A${r},${r} 0 0,1 ${d.target.x},${d.target.y}
@@ -16,7 +19,7 @@ function linkArc2(d) {
     let tx = d.target.x;
     let ty = d.target.y;
 
-    const linknum = 3
+    const linknum = 2
 
     // distance b/w curve paths
     let cd = 30;
@@ -45,7 +48,7 @@ function linkArc2(d) {
 
 const drag = simulation => {
   function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
+    if (!event.active) simulation.alphaTarget(0.3).restart()
     d.fx = d.x;
     d.fy = d.y;
   }
@@ -64,7 +67,7 @@ const drag = simulation => {
   return d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
-      /* .on("end", dragended); */
+      .on("end", dragended);
 }
 
 
@@ -76,7 +79,7 @@ function ForceLayout(props) {
     setRerender(reRender + 1)
   }, [data])
 
-  /* data && ReactionMetaboliteFormatter(data) */
+  console.log(data.nodes)
 
   // set the dimensions and margins of the graph
   const width = window.innerWidth
@@ -134,8 +137,9 @@ function ForceLayout(props) {
       .force("charge", d3.forceManyBody().strength(-400))         // This adds repulsion between nodes. Play with the -400 for the repulsion strength
       .force("x", d3.forceX())
       .force("y", d3.forceY())
+      /* .force("collide", d3.forceCollide(15))  */
 
-    console.log(link)
+
       // Initialize the nodes
       const node = svg
         .selectAll("g.node")
@@ -150,21 +154,20 @@ function ForceLayout(props) {
       node.append("text")
         .attr("x", 19)
         .attr("y", "0.31em")
-        /* .text(d => d.labels) */
-        .text(d => d.id.split(" ")[1])
-        /* .text(d => d.labels ? d.labels : d.id.split(" ")[1] ? d.id.split(" ")[1] : d.id) */
+        .text(d => d.id.split(" ")[d.id.split(" ").length - 1])
           .attr("fill", "#888")
           .attr("stroke", "#888")
           .attr("stroke-width", 0.5);
-    
+
+      /* node.filter(d => d.reactionNode === true) */
+      /*   .style("display", "none"); */
+
       node.call(drag(simulation))
-    
     
   simulation.on("tick", () => {
     link.attr("d", linkArc);
-    node.attr("transform", d => `translate(${d.x},${d.y})`);
+    node.attr("transform", d => `translate(${d.x},${d.y})` );
   })
-
 
   }
 
@@ -174,4 +177,3 @@ function ForceLayout(props) {
 }
 
 export default ForceLayout
-

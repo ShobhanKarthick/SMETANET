@@ -1,41 +1,48 @@
-const ReactionMetaboliteFormatter = (graphAsJson) => {
-  const coFactors = ['coa', 'nadh', 'nad', 'nadph', 'nadp', 'atp', 'adp', 'amp',
-                    'q8', 'q8h2', 'pi', 'co2', 'h2o', 'h', 'o2', 'h2', 'nh4', 'fad', 'fadh']
+function DataFormatter(graphAsJSON) {
+  const coFactors = [ "coa", "nadh", "nad", "nadph", "nadp", "atp", "adp", "amp",
+                      "q8", "q8h2", "pi", "co2", "h2o", "h", "o2", "h2",
+                      "nh4", "fad", "fadh", "gtp", "ctp", "ttp", "pi",
+                    ];
 
-  let coFactorFrequency = {}
-  coFactors.forEach(element => {
-    coFactorFrequency[element] = 0
-  });
 
-  console.log(coFactorFrequency)
+  const data = graphAsJSON
+  const newData = data.nodes.map((node) => {
+    const nodeLinks = data.links.filter((link) => link.source === node.id || link.target === node.id)
+    const numEdges = nodeLinks.length;
 
-  graphAsJson["links"].forEach(link => {
-    /* console.log(link.source.id.split(" ")[1]) */
-    /* console.log(link.target.id.split(" ")[1]) */
-    let source = ""
-    let target = ""
+    let coFactor = false
+    let reactionNode = false
 
-    if(link.source.id == null) {
-      console.log(link.source)
-      source = link.source.split(" ")[link.source.length - 1]
-    } else if (link.source.id != null) {
-      source = link.source.id.split(" ")[link.source.id.length - 1]
-      source = source.split("[")
-      source = source[source.length - 1]
+    const nodeName = node.id.split(" ")
+    if(nodeName[nodeName.length - 1]?.includes("[")){
+      if(coFactors.includes(nodeName[nodeName.length - 1].split("[")[0])) {
+        coFactor = true
+      }
+    } else {
+      reactionNode = true
     }
-      
-    if(link.target.id == null) {
-      console.log(link.target)
-      target = link.target.split(" ")[1]
-    } else if (link.target.id != null) {
-      target = link.target.id.split(" ")[link.target.id.length - 1]
-      target = target.split("[")
-      target = target[target.length - 1]
+    node["numEdges"] = numEdges
+    node["coFactor"] = coFactor
+    node["reactionNode"] = reactionNode
+
+    if (node.coFactor && node.numEdges > 1) {
+      for (let i = 0; i < node.numEdges - 1; i++) {
+        const newNode = { ...node }; 
+        newNode.id = `${i+1}_${node.id}` 
+        newNode.numEdges = 1
+        data.nodes.push(newNode)
+        if (nodeLinks[i].source === node.id) {
+          const index = data.links.findIndex(link => link.source === node.id)
+          data.links[index].source = newNode 
+        } else {
+          const index = data.links.findIndex(link => link.target === node.id)
+          data.links[index].target = newNode 
+        }
+      }
+      node.numEdges = 1
     }
-
-    console.log(source, target)
-  });
-
+  })
+  return data
 }
 
-export default ReactionMetaboliteFormatter
+export default DataFormatter
