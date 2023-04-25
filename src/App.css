@@ -74,6 +74,15 @@ body {
   overflow: scroll;
 }
 
+.cycle-node {
+  fill: #ea3c55 !important;
+}
 
+.cycle-link {
+  stroke: #333 !important;
+}
 
+.link-arrow {
+  fill: #333 !important;
+}
 

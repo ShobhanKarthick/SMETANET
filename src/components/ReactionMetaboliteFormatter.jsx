@@ -1,11 +1,15 @@
+import detectCycles from "./DetectCycle"
+
 function DataFormatter(graphAsJSON) {
+  console.log(graphAsJSON)
   const coFactors = [ "coa", "nadh", "nad", "nadph", "nadp", "atp", "adp", "amp",
                       "q8", "q8h2", "pi", "co2", "h2o", "h", "o2", "h2",
-                      "nh4", "fad", "fadh", "gtp", "ctp", "ttp", "pi",
+                      "nh4", "fad", "fadh", "fadh2", "gtp", "ctp", "ttp", "pi",
+                      "utp", "ctp", "adn"
                     ];
 
 
-  const data = graphAsJSON
+  let data = graphAsJSON
   const newData = data.nodes.map((node) => {
     const nodeLinks = data.links.filter((link) => link.source === node.id || link.target === node.id)
     const numEdges = nodeLinks.length;
@@ -42,6 +46,9 @@ function DataFormatter(graphAsJSON) {
       node.numEdges = 1
     }
   })
+
+  data = detectCycles(data, true)
+  
   return data
 }
 

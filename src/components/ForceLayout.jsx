@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react"
 import * as d3 from "d3";
-import ReactionMetaboliteFormatter from "./ReactionMetaboliteFormatter"
+import detectCycles from "./DetectCycle"
 
 const linkArc = (d) => {
   let r = 0
-  /* if (d.source.coFactor || d.target.coFactor) { */
+  if (d.source.coFactor || d.target.coFactor) {
     r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y) 
-  /* }  */
+  } 
   return `
     M${d.source.x},${d.source.y}
-    A${r},${r} 0 0,1 ${d.target.x},${d.target.y}
+    A${0.55*r},${0.55*r} 0 0,1 ${d.target.x},${d.target.y}
   `;
 }
 
@@ -46,9 +46,29 @@ function linkArc2(d) {
     return 'M' + d.source.x + ',' + d.source.y + final + d.target.x + ',' + d.target.y
   }
 
-const drag = simulation => {
+const deleteNode = (data) => {
+  // Delete the clicked node from the data
+  /* console.log(d, data) */
+  const clickedNode = d3.select(event.target.parentNode);
+  console.log(clickedNode.datum())
+  const { id } = clickedNode.datum();
+  const confirmation = window.confirm(`Are you sure you want to delete node ${id}?`);
+  if (confirmation) {
+    const nodeId = id
+    const filteredNodes = data.nodes.filter(node => node.id !== nodeId); 
+    const filteredLinks = data.links.filter(link => link.source.id !== nodeId && link.target.id !== nodeId); 
+    data.nodes = filteredNodes; // Update the nodes data
+    data.links = filteredLinks; // Update the links data
+
+    return data
+  } else {
+    return
+  }
+}
+
+const drag = (simulation, fixedDrag) => {
   function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart()
+    if (!event.active) simulation.alphaTarget(0.1).restart()
     d.fx = d.x;
     d.fy = d.y;
   }
@@ -64,26 +84,56 @@ const drag = simulation => {
     d.fy = null;
   }
   
-  return d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
+  if (fixedDrag) {
+    return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+  } else {
+    return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+  }
 }
 
 
 function ForceLayout(props) {
-  const { data } = props
+  let { graphData } = props
+  const [data, setData] = useState(graphData)
   const [reRender, setRerender] = useState(0)
 
   useEffect(() => {
     setRerender(reRender + 1)
-  }, [data])
+    setData(graphData)
+  }, [graphData])
+
+  useEffect(() => {
+
+    if(props.showCycles) {
+      d3.selectAll("circle")
+        .filter((d) => d.isPartOfCycle)
+        .classed("cycle-node", (node) => node.isPartOfCycle);
+
+      d3.selectAll(".link")
+        .filter((d) => d.isPartOfCycle)
+        .classed("cycle-link", (link) => link.isPartOfCycle)
+        .select("marker-end")
+          .attr("class", "link-arrow")
+          .attr("marker-end", "url(#arrow)")
+    } else {
+      d3.selectAll(".cycle-node")
+        .classed("cycle-node", false)
+
+      d3.selectAll(".cycle-link")
+        .classed("cycle-link", false)
+    }
+  }, [props.showCycles])
 
   console.log(data.nodes)
 
   // set the dimensions and margins of the graph
-  const width = window.innerWidth
-  const height = window.innerHeight
+  const width = props.width
+  const height = props.height
 
   const xOffset = -width / 2
   const yOffset = -height / 2
@@ -111,7 +161,7 @@ function ForceLayout(props) {
       .attr('markerHeight', 15)
       .append("path")
       .attr("fill", "#999")
-      .attr("d", "M0,-5L10,0L0,5");
+      .attr("d", "M0,-5L10,0L0,5")
 
       console.log(data)
 
@@ -124,10 +174,8 @@ function ForceLayout(props) {
         .join("path")
           .attr("stroke", "#999")
           .attr('marker-end', d => 'url(#arrowhead)')
+        .attr("class", "link") 
 
-
-
-      // Let's list the force we wanna apply on the network
       // This function is run at each iteration of the force algorithm, updating the nodes position.
   const simulation = d3.forceSimulation(data.nodes)                 // Force algorithm is applied to data.nodes
       .force("link", d3.forceLink()                               // This force provides links between nodes
@@ -154,15 +202,38 @@ function ForceLayout(props) {
       node.append("text")
         .attr("x", 19)
         .attr("y", "0.31em")
-        .text(d => d.id.split(" ")[d.id.split(" ").length - 1])
+        .text(d => {
+          if(!d.reactionNode) {
+            return d.id.split(" ")[d.id.split(" ").length - 1]
+          } else {
+            return d.labels
+          } 
+        })
           .attr("fill", "#888")
           .attr("stroke", "#888")
           .attr("stroke-width", 0.5);
 
+      d3.selectAll("circle")
+        .filter((d) => d.isPartOfCycle)
+        .classed("cycle-node", (node) => node.isPartOfCycle);
+
+      d3.selectAll(".link")
+        .filter((d) => d.isPartOfCycle)
+        .classed("cycle-link", (link) => link.isPartOfCycle)
+        .select("marker-end")
+          .attr("class", "link-arrow")
+          .attr("marker-end", "url(#arrow)")
+
       /* node.filter(d => d.reactionNode === true) */
       /*   .style("display", "none"); */
 
-      node.call(drag(simulation))
+      node.on("click", () => {
+        let newData = deleteNode(data)
+        newData = detectCycles(newData, false)
+        newData && setData({nodes: newData.nodes, links: newData.links})
+      })
+
+      node.call(drag(simulation, props.fixedDrag))
     
   simulation.on("tick", () => {
     link.attr("d", linkArc);
