@@ -4,8 +4,6 @@ const detectCycles = (data, firstTime) => {
   const cycles = new Set(); // Set to store detected cycles
   const cycleClass = "cycle"; // CSS class to apply to highlighted nodes and edges
 
-  console.log(data.links)
-
   // Function to perform DFS
   function dfs(nodeId) {
     visited.add(nodeId); // Add current node to visited set
@@ -21,7 +19,6 @@ const detectCycles = (data, firstTime) => {
           dfs(neighborId);
         } else if (stack.has(neighborId)) {
           // If neighbor is already in stack, a cycle is found
-          console.log(nodeId, neighborId)
           cycles.add(nodeId); // Add current node to cycles set
           cycles.add(neighborId); // Add neighbor node to cycles set
         }
